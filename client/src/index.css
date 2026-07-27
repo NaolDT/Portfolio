@@ -1,0 +1,76 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary:     #0A0E1A;
+  --bg-card:        #111827;
+  --cyan:           #00D4FF;
+  --purple:         #7B2FFF;
+  --text-primary:   #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted:     #64748B;
+  --border:         rgba(0, 212, 255, 0.12);
+  --border-soft:    rgba(255, 255, 255, 0.06);
+  --font-display:   'Space Grotesk', sans-serif;
+  --font-body:      'Inter', sans-serif;
+  --font-mono:      'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+section {
+  padding: 5rem 2rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+@media (max-width: 768px) { section { padding: 4rem 1.5rem; } }
+@media (max-width: 480px) { section { padding: 3rem 1.25rem; } }
+
+.divider {
+  height: 0.5px;
+  background: var(--border);
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.btn-primary {
+  background: var(--cyan); color: var(--bg-primary); border: none;
+  padding: 12px 24px; border-radius: 8px; font-family: var(--font-display);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, transform 0.15s; white-space: nowrap;
+}
+.btn-primary:hover { background: #33DCFF; transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent; color: var(--text-secondary);
+  border: 0.5px solid rgba(148,163,184,0.3); padding: 12px 24px;
+  border-radius: 8px; font-family: var(--font-display);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s; white-space: nowrap;
+}
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.section-label {
+  font-family: var(--font-mono); font-size: 11px; color: var(--cyan);
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.75rem;
+}
+
+.section-title { font-size: 32px; font-weight: 700; margin-bottom: 2.5rem; }
+@media (max-width: 480px) { .section-title { font-size: 26px; margin-bottom: 1.75rem; } }
