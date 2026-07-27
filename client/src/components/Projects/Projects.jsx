@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosInstance'
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
 import './Projects.css';
@@ -64,7 +64,7 @@ function Projects() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    axios
+    api
       .get('/api/projects')
       .then((res) => { if (res.data.length > 0) setProjects(res.data); })
       .catch(() => {});

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosInstance'
 import { useAdmin } from '../../../context/AdminContext';
 
 const empty  = { group: '', name: '', pct: '', order: 0 };
@@ -16,7 +16,7 @@ function SkillsTab() {
   const headers = { Authorization: `Bearer ${token}` };
 
   const fetchSkills = async () => {
-    const res = await axios.get('/api/skills');
+    const res = await api.get('/api/skills');
     setSkills(res.data);
   };
 
@@ -33,10 +33,10 @@ function SkillsTab() {
     const payload = { ...form, pct: Number(form.pct), order: Number(form.order) };
     try {
       if (editId) {
-        await axios.put(`/api/skills/${editId}`, payload, { headers });
+        await api.put(`/api/skills/${editId}`, payload, { headers });
         flash('Skill updated ✓');
       } else {
-        await axios.post('/api/skills', payload, { headers });
+        await api.post('/api/skills', payload, { headers });
         flash('Skill added ✓');
       }
       setForm(empty); setEditId(null); fetchSkills();
@@ -55,7 +55,7 @@ function SkillsTab() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this skill?')) return;
-    await axios.delete(`/api/skills/${id}`, { headers });
+    await api.delete(`/api/skills/${id}`, { headers });
     flash('Skill deleted'); fetchSkills();
   };
 

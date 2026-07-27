@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import axios from 'axios';
+import api from '../../api/axiosInstance'
 import './Admin.css';
 
 function AdminLogin() {
@@ -16,7 +16,7 @@ function AdminLogin() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('/api/admin/login', form);
+      const res = await api.post('/api/admin/login', form);
       login(res.data.token);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');

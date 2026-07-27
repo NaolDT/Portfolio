@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosInstance'
 import './Skills.css';
 
 const fallbackGroups = [
@@ -69,7 +69,7 @@ function Skills() {
   const observerRef             = useRef(null);
 
   useEffect(() => {
-    axios.get('/api/skills')
+    api.get('/api/skills')
       .then((res) => {
         if (res.data.length > 0) {
           setGroups(groupSkills(res.data));

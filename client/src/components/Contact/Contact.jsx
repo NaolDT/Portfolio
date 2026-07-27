@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosInstance'
 import './Contact.css';
 
 const CONTACT_EMAIL = 'naoldera8@gmail.com';     
@@ -19,7 +19,7 @@ function Contact() {
     setLoading(true);
     setStatus('');
     try {
-      await axios.post('/api/contact', form);
+      await api.post('/api/contact', form);
       setStatus('success');
       setForm({ name: '', email: '', message: '' });
     } catch {

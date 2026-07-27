@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosInstance'
 import { useAdmin } from '../../../context/AdminContext';
 
 const empty = {
@@ -19,7 +19,7 @@ function ProjectsTab() {
   const headers = { Authorization: `Bearer ${token}` };
 
   const fetchProjects = async () => {
-    const res = await axios.get('/api/projects');
+    const res = await api.get('/api/projects');
     setProjects(res.data);
   };
 
@@ -38,10 +38,10 @@ function ProjectsTab() {
     const payload = { ...form, tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean) };
     try {
       if (editId) {
-        await axios.put(`/api/projects/${editId}`, payload, { headers });
+        await api.put(`/api/projects/${editId}`, payload, { headers });
         flash('Project updated ✓');
       } else {
-        await axios.post('/api/projects', payload, { headers });
+        await api.post('/api/projects', payload, { headers });
         flash('Project added ✓');
       }
       setForm(empty); setEditId(null); fetchProjects();
@@ -60,7 +60,7 @@ function ProjectsTab() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this project?')) return;
-    await axios.delete(`/api/projects/${id}`, { headers });
+    await api.delete(`/api/projects/${id}`, { headers });
     flash('Project deleted'); fetchProjects();
   };
 
