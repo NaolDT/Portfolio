@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../../api/axiosInstance'
+import api from '../../../api/axiosInstance'
 import { useAdmin } from '../../../context/AdminContext';
 
 const empty = {
