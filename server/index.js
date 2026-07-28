@@ -13,7 +13,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
-  'https://portfolio-naol1.vercel.app',  
+  'https://portfolio-naol1.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
@@ -27,7 +27,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.options('*', cors());
+app.options('/(.*)', cors());
 
 app.use(express.json());
 
