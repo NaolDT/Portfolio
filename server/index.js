@@ -17,7 +17,7 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -25,9 +25,11 @@ app.use(cors({
     callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
-}));
+};
 
-app.options('/(.*)', cors());
+app.use(cors(corsOptions));
+
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 
