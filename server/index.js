@@ -13,6 +13,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
+  'https://portfolio-naol1.vercel.app',  
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
@@ -20,10 +21,13 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.log('CORS blocked origin:', origin);
     callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
 }));
+
+app.options('*', cors());
 
 app.use(express.json());
 
