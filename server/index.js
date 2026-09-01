@@ -9,6 +9,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
   'https://portfolio-naol1.vercel.app',
+  'https://portfolio-oh1bpv01e-naol1.vercel.app',
+  'https://portfolio-dev-naol.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 

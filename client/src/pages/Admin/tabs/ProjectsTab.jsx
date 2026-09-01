@@ -67,12 +67,12 @@ function ProjectsTab() {
     try {
       const fd = buildFormData();
       if (editId) {
-        await api.put(`/api/projects/${editId}`, fd, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } });
-        flash('Project updated ✓');
-      } else {
-        await api.post('/api/projects', fd, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } });
-        flash('Project added ✓');
-      }
+  await api.put(`/api/projects/${editId}`, fd, { headers });
+  flash('Project updated ✓');
+} else {
+  await api.post('/api/projects', fd, { headers });
+  flash('Project added ✓');
+}
       setForm(EMPTY); setEditId(null); setImageFile(null); setImagePreview(null);
       if (fileRef.current) fileRef.current.value = '';
       fetch();
