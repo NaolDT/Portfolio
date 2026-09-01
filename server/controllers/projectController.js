@@ -57,15 +57,37 @@ const deleteProject = async (req, res) => {
 
 function parseProjectBody(body) {
   const data = { ...body };
-  ['technologies', 'features', 'apiEndpoints', 'challenges', 'architecture'].forEach((field) => {
+
+  const jsonFields = ['technologies', 'features', 'apiEndpoints', 'challenges', 'architecture'];
+
+  jsonFields.forEach((field) => {
+    if (!data[field] || data[field] === '' || data[field] === 'undefined') {
+      if (field === 'architecture') {
+        data[field] = { description: '', layers: [] };
+      } else {
+        data[field] = [];
+      }
+      return;
+    }
     if (typeof data[field] === 'string') {
-      try { data[field] = JSON.parse(data[field]); } catch { /* keep as string */ }
+      try {
+        data[field] = JSON.parse(data[field]);
+      } catch (e) {
+        // If JSON.parse fails, set safe default
+        if (field === 'architecture') {
+          data[field] = { description: '', layers: [] };
+        } else {
+          data[field] = [];
+        }
+      }
     }
   });
+
   if (data.featured !== undefined)
     data.featured = data.featured === 'true' || data.featured === true;
   if (data.order !== undefined)
-    data.order = Number(data.order);
+    data.order = Number(data.order) || 0;
+
   return data;
 }
 

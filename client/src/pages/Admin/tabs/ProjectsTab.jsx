@@ -38,29 +38,52 @@ function ProjectsTab() {
     setImagePreview(URL.createObjectURL(file));
   };
 
-  const buildFormData = () => {
-    const fd = new FormData();
-    ['title','category','status','tagline','overview','contribution','githubUrl','liveUrl'].forEach((k) => fd.append(k, form[k]));
-    fd.append('featured', form.featured);
-    fd.append('order', form.order);
-    fd.append('technologies', JSON.stringify(
-      form.technologies.split(',').map((t) => t.trim()).filter(Boolean)
-    ));
-    fd.append('features', JSON.stringify(
-      form.features.split('\n').map((f) => f.trim()).filter(Boolean)
-    ));
-    fd.append('apiEndpoints', JSON.stringify(
-      form.apiEndpoints.split('\n').map((e) => e.trim()).filter(Boolean)
-    ));
-    const challengeLines = form.challenges.split('\n\n').filter(Boolean);
-    const challenges = challengeLines.map((block) => {
-      const [problem, ...rest] = block.split('\n');
-      return { problem: problem.trim(), solution: rest.join(' ').trim() };
-    }).filter((c) => c.problem && c.solution);
-    fd.append('challenges', JSON.stringify(challenges));
-    if (imageFile) fd.append('image', imageFile);
-    return fd;
-  };
+ const buildFormData = () => {
+  const fd = new FormData();
+
+  ['title', 'category', 'status', 'tagline', 'overview', 'contribution', 'githubUrl', 'liveUrl'].forEach((k) => {
+    fd.append(k, form[k] || '');
+  });
+
+  fd.append('featured', form.featured);
+  fd.append('order', form.order || 0);
+
+  const technologies = form.technologies
+    ? form.technologies.split(',').map((t) => t.trim()).filter(Boolean)
+    : [];
+  fd.append('technologies', JSON.stringify(technologies));
+
+  const features = form.features
+    ? form.features.split('\n').map((f) => f.trim()).filter(Boolean)
+    : [];
+  fd.append('features', JSON.stringify(features));
+
+  const apiEndpoints = form.apiEndpoints
+    ? form.apiEndpoints.split('\n').map((e) => e.trim()).filter(Boolean)
+    : [];
+  fd.append('apiEndpoints', JSON.stringify(apiEndpoints));
+
+  const challenges = form.challenges
+    ? form.challenges
+        .split('\n\n')
+        .filter(Boolean)
+        .map((block) => {
+          const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+          return {
+            problem:  lines[0] || '',
+            solution: lines.slice(1).join(' ') || '',
+          };
+        })
+        .filter((c) => c.problem && c.solution)
+    : [];
+  fd.append('challenges', JSON.stringify(challenges));
+
+  fd.append('architecture', JSON.stringify({ description: '', layers: [] }));
+
+  if (imageFile) fd.append('image', imageFile);
+
+  return fd;
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setLoading(true);
