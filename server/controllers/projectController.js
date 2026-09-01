@@ -22,18 +22,36 @@ const getProject = async (req, res) => {
 
 const createProject = async (req, res) => {
   try {
+    console.log('=== CREATE PROJECT ===');
+    console.log('body keys:', Object.keys(req.body));
+    console.log('body:', JSON.stringify(req.body, null, 2));
+    console.log('file:', req.file ? req.file.originalname : 'no file');
+
     const data = parseProjectBody(req.body);
+    console.log('parsed data:', JSON.stringify(data, null, 2));
+
     if (req.file) data.image = await uploadToCloudinary(req.file);
     const project = await Project.create(data);
     res.status(201).json(project);
   } catch (err) {
+    console.log('=== CREATE ERROR ===');
+    console.log('message:', err.message);
+    console.log('full error:', err);
     res.status(400).json({ message: 'Validation error', error: err.message });
   }
 };
 
 const updateProject = async (req, res) => {
   try {
+    console.log('=== UPDATE PROJECT ===');
+    console.log('id:', req.params.id);
+    console.log('body keys:', Object.keys(req.body));
+    console.log('body:', JSON.stringify(req.body, null, 2));
+    console.log('file:', req.file ? req.file.originalname : 'no file');
+
     const data = parseProjectBody(req.body);
+    console.log('parsed data:', JSON.stringify(data, null, 2));
+
     if (req.file) data.image = await uploadToCloudinary(req.file);
     const project = await Project.findByIdAndUpdate(
       req.params.id, data, { new: true, runValidators: true }
@@ -41,6 +59,9 @@ const updateProject = async (req, res) => {
     if (!project) return res.status(404).json({ message: 'Not found' });
     res.json(project);
   } catch (err) {
+    console.log('=== UPDATE ERROR ===');
+    console.log('message:', err.message);
+    console.log('full error:', err);
     res.status(400).json({ message: 'Validation error', error: err.message });
   }
 };
