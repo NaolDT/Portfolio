@@ -1,43 +1,86 @@
-const Project = require('../models/Project');
+const Project    = require('../models/Project');
+const cloudinary = require('../utils/cloudinary');
 
 const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.find().sort({ order: 1, createdAt: -1 });
     res.json(projects);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const getProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: 'Not found' });
+    res.json(project);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 const createProject = async (req, res) => {
   try {
-    const project = await Project.create(req.body);
+    const data = parseProjectBody(req.body);
+    if (req.file) data.image = await uploadToCloudinary(req.file);
+    const project = await Project.create(data);
     res.status(201).json(project);
-  } catch (error) {
-    res.status(400).json({ message: 'Validation error', error: error.message });
+  } catch (err) {
+    res.status(400).json({ message: 'Validation error', error: err.message });
   }
 };
 
 const updateProject = async (req, res) => {
   try {
+    const data = parseProjectBody(req.body);
+    if (req.file) data.image = await uploadToCloudinary(req.file);
     const project = await Project.findByIdAndUpdate(
-      req.params.id, req.body, { new: true, runValidators: true }
+      req.params.id, data, { new: true, runValidators: true }
     );
-    if (!project) return res.status(404).json({ message: 'Project not found' });
+    if (!project) return res.status(404).json({ message: 'Not found' });
     res.json(project);
-  } catch (error) {
-    res.status(400).json({ message: 'Validation error', error: error.message });
+  } catch (err) {
+    res.status(400).json({ message: 'Validation error', error: err.message });
   }
 };
 
 const deleteProject = async (req, res) => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);
-    if (!project) return res.status(404).json({ message: 'Project not found' });
+    if (!project) return res.status(404).json({ message: 'Not found' });
     res.json({ message: 'Project deleted' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-module.exports = { getProjects, createProject, updateProject, deleteProject };
+function parseProjectBody(body) {
+  const data = { ...body };
+  ['technologies', 'features', 'apiEndpoints', 'challenges', 'architecture'].forEach((field) => {
+    if (typeof data[field] === 'string') {
+      try { data[field] = JSON.parse(data[field]); } catch { /* keep as string */ }
+    }
+  });
+  if (data.featured !== undefined)
+    data.featured = data.featured === 'true' || data.featured === true;
+  if (data.order !== undefined)
+    data.order = Number(data.order);
+  return data;
+}
+
+async function uploadToCloudinary(file) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        { folder: 'portfolio/projects', resource_type: 'image' },
+        (err, result) => {
+          if (err) return reject(err);
+          resolve(result.secure_url);
+        }
+      )
+      .end(file.buffer);
+  });
+}
+
+module.exports = { getProjects, getProject, createProject, updateProject, deleteProject };

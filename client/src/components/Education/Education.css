@@ -1,0 +1,22 @@
+.edu-card { display: flex; gap: 1.5rem; align-items: flex-start; background: var(--bg-card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 2rem; }
+.edu-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--cyan-dim); border: 0.5px solid rgba(0,212,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.edu-degree { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.edu-org { font-size: 14px; color: var(--text-secondary); margin-bottom: 2px; }
+.edu-faculty { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.edu-period { font-family: var(--font-mono); font-size: 11px; color: var(--cyan); margin-bottom: 1.25rem; }
+.edu-courses-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 0.6rem; }
+.edu-courses { display: flex; flex-wrap: wrap; gap: 6px; }
+.edu-course { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.04); border: 0.5px solid var(--border-soft); padding: 4px 9px; border-radius: 4px; }
+
+.cert-section { }
+.cert-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+.cert-card { display: flex; align-items: center; gap: 1rem; background: var(--bg-card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.cert-icon { font-size: 20px; }
+.cert-right { flex: 1; min-width: 0; }
+.cert-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+.cert-org { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; font-family: var(--font-mono); }
+.cert-note { font-size: 12px; color: var(--text-muted); }
+.cert-badge { font-family: var(--font-mono); font-size: 10px; background: rgba(74,222,128,0.1); color: #4ADE80; border: 0.5px solid rgba(74,222,128,0.25); padding: 3px 8px; border-radius: 20px; }
+.cert-coming { font-size: 13px; color: var(--text-muted); font-family: var(--font-mono); line-height: 1.6; }
+
+@media (max-width: 480px) { .edu-card { flex-direction: column; gap: 1rem; } }

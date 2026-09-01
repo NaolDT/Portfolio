@@ -3,11 +3,6 @@ const mongoose = require('mongoose');
 const cors     = require('cors');
 require('dotenv').config();
 
-const projectRoutes = require('./routes/projects');
-const skillRoutes   = require('./routes/skills');
-const contactRoutes = require('./routes/contact');
-const adminRoutes   = require('./routes/admin');
-
 const app = express();
 
 const allowedOrigins = [
@@ -17,26 +12,35 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-const corsOptions = {
+app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    console.log('CORS blocked origin:', origin);
     callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
-};
+}));
 
-app.use(cors(corsOptions));
+app.options(/.*/, cors());
 
-app.options(/.*/, cors(corsOptions));
+app.use((req, res, next) => {
+  if (req.headers['content-type']?.startsWith('multipart/form-data')) {
+    return next();
+  }
+  express.json()(req, res, next);
+});
 
-app.use(express.json());
-
-app.use('/api/projects', projectRoutes);
-app.use('/api/skills',   skillRoutes);
-app.use('/api/contact',  contactRoutes);
-app.use('/api/admin',    adminRoutes);
+app.use('/api/projects',   require('./routes/projects'));
+app.use('/api/skills',     require('./routes/skills'));
+app.use('/api/hero',       require('./routes/hero'));
+app.use('/api/about',      require('./routes/about'));
+app.use('/api/quickstats', require('./routes/quickstats'));
+app.use('/api/experience', require('./routes/experience'));
+app.use('/api/building',   require('./routes/building'));
+app.use('/api/education',  require('./routes/education'));
+app.use('/api/settings',   require('./routes/settings'));
+app.use('/api/contact',    require('./routes/contact'));
+app.use('/api/admin',      require('./routes/admin'));
 
 app.get('/', (req, res) =>
   res.json({ message: 'Portfolio API running', env: process.env.NODE_ENV })

@@ -1,6 +1,6 @@
-import { useAdmin }       from '../../context/AdminContext';
-import AdminLogin         from './AdminLogin';
-import AdminDashboard     from './AdminDashboard';
+import { useAdmin }   from '../../context/AdminContext';
+import AdminLogin     from './AdminLogin';
+import AdminDashboard from './AdminDashboard';
 
 function AdminPage() {
   const { isAuth } = useAdmin();

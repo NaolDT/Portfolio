@@ -1,45 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import api from '../../api/axiosInstance'
 import './Skills.css';
+import useApi from '../../hooks/useApi';
 
-const fallbackGroups = [
-  {
-    title: 'Frontend',
-    skills: [
-      { _id: 'f1', name: 'React.js',          pct: 88 },
-      { _id: 'f2', name: 'JavaScript (ES6+)', pct: 85 },
-      { _id: 'f3', name: 'HTML / CSS',         pct: 90 },
-      { _id: 'f4', name: 'Tailwind CSS',       pct: 78 },
-    ],
-  },
-  {
-    title: 'Backend',
-    skills: [
-      { _id: 'b1', name: 'Node.js',         pct: 82 },
-      { _id: 'b2', name: 'Express.js',      pct: 80 },
-      { _id: 'b3', name: 'REST API Design', pct: 83 },
-      { _id: 'b4', name: 'JWT / Auth',      pct: 75 },
-    ],
-  },
-  {
-    title: 'Database & Tools',
-    skills: [
-      { _id: 'd1', name: 'MongoDB',      pct: 79 },
-      { _id: 'd2', name: 'MySQL',        pct: 82 },
-      { _id: 'd3', name: 'Git / GitHub', pct: 85 },
-      { _id: 'd4', name: 'Postman',      pct: 77 },
-    ],
-  },
-  {
-    title: 'Architecture',
-    skills: [
-      { _id: 'a1', name: 'Software Architecture', pct: 74 },
-      { _id: 'a2', name: 'System Design',         pct: 72 },
-      { _id: 'a3', name: 'UML / Diagrams',        pct: 80 },
-      { _id: 'a4', name: 'Agile / Scrum',         pct: 70 },
-    ],
-  },
-];
+const levelColors = {
+  Advanced:     { bg: 'rgba(0,212,255,0.1)',   color: '#00D4FF', border: 'rgba(0,212,255,0.3)'   },
+  Intermediate: { bg: 'rgba(123,47,255,0.1)',  color: '#A78BFA', border: 'rgba(123,47,255,0.3)'  },
+  Familiar:     { bg: 'rgba(148,163,184,0.1)', color: '#94A3B8', border: 'rgba(148,163,184,0.3)' },
+  Learning:     { bg: 'rgba(251,191,36,0.1)',  color: '#FBBF24', border: 'rgba(251,191,36,0.3)'  },
+};
 
 function groupSkills(skills) {
   const map = {};
@@ -47,79 +14,51 @@ function groupSkills(skills) {
     if (!map[s.group]) map[s.group] = [];
     map[s.group].push(s);
   });
-  return Object.entries(map).map(([title, skills]) => ({ title, skills }));
-}
-
-function animateBars(container) {
-  if (!container) return;
-  container.querySelectorAll('.skill-bar').forEach((bar) => {
-    bar.style.width = '0%';
-  });
-  setTimeout(() => {
-    container.querySelectorAll('.skill-bar').forEach((bar) => {
-      bar.style.width = bar.dataset.w + '%';
-    });
-  }, 100);
+  return Object.entries(map).map(([group, items]) => ({ group, items }));
 }
 
 function Skills() {
-  const [groups, setGroups]     = useState(fallbackGroups);
-  const [loaded, setLoaded]     = useState(false);
-  const gridRef                 = useRef(null);
-  const observerRef             = useRef(null);
-
-  useEffect(() => {
-    api.get('/api/skills')
-      .then((res) => {
-        if (res.data.length > 0) {
-          setGroups(groupSkills(res.data));
-        }
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
-  }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          animateBars(gridRef.current);
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    if (gridRef.current) {
-      observerRef.current.observe(gridRef.current);
-    }
-
-    return () => observerRef.current?.disconnect();
-  }, [loaded, groups]); 
+  const { data: skills } = useApi('/api/skills', []);
+  const groups = groupSkills(skills || []);
 
   return (
     <section id="skills">
-      <div className="section-label">// 02 — skills</div>
+      <div className="section-label">// 03 — skills</div>
       <h2 className="section-title">Tech stack</h2>
+      <p className="section-sub">
+        Technologies I work with across the full stack — from UI to API to database.
+      </p>
 
-      <div className="skills-grid" ref={gridRef}>
-        {groups.map((group) => (
-          <div className="skill-group" key={group.title}>
-            <div className="skill-group-title">{group.title}</div>
-            {group.skills.map((s) => (
-              <div className="skill-item" key={s._id || s.name}>
-                <div className="skill-row">
-                  <span>{s.name}</span>
-                  <span className="skill-pct">{s.pct}%</span>
-                </div>
-                <div className="skill-track">
-                  <div className="skill-bar" data-w={s.pct} style={{ width: '0%' }} />
-                </div>
-              </div>
-            ))}
+      <div className="skills-legend">
+        {Object.entries(levelColors).map(([level, style]) => (
+          <span key={level} className="legend-item" style={{ color: style.color }}>
+            <span className="legend-dot" style={{ background: style.color }} />
+            {level}
+          </span>
+        ))}
+      </div>
+
+      <div className="skills-grid">
+        {groups.map(({ group, items }) => (
+          <div className="skill-group" key={group}>
+            <div className="skill-group-title">{group}</div>
+            <div className="skill-pills">
+              {[...items]
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map((s) => {
+                  const style = levelColors[s.level] || levelColors['Intermediate'];
+                  return (
+                    <span
+                      key={s._id}
+                      className="skill-pill"
+                      style={{ background: style.bg, color: style.color, border: `0.5px solid ${style.border}` }}
+                      title={s.level}
+                    >
+                      {s.name}
+                    </span>
+                  );
+                })}
+            </div>
           </div>
         ))}
       </div>

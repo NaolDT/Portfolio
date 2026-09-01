@@ -1,0 +1,18 @@
+.quickstats { background: rgba(17,24,39,0.6); border-top: 0.5px solid var(--border-soft); border-bottom: 0.5px solid var(--border-soft); }
+.quickstats-inner { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); padding: 0 2rem; }
+
+.stat-item { padding: 1.75rem 1.5rem; border-right: 0.5px solid var(--border-soft); transition: background 0.2s; }
+.stat-item:last-child { border-right: none; }
+.stat-item:hover { background: rgba(0,212,255,0.03); }
+
+.stat-value { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--cyan); margin-bottom: 4px; letter-spacing: -0.5px; }
+.stat-label { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+.stat-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+
+@media (max-width: 768px) {
+  .quickstats-inner { grid-template-columns: repeat(2, 1fr); padding: 0 1.5rem; }
+  .stat-item:nth-child(2) { border-right: none; }
+  .stat-item:nth-child(3) { border-right: 0.5px solid var(--border-soft); border-top: 0.5px solid var(--border-soft); }
+  .stat-item:nth-child(4) { border-right: none; border-top: 0.5px solid var(--border-soft); }
+}
+@media (max-width: 480px) { .quickstats-inner { padding: 0 1.25rem; } .stat-item { padding: 1.25rem 1rem; } .stat-value { font-size: 18px; } }
