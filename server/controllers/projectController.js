@@ -22,46 +22,37 @@ const getProject = async (req, res) => {
 
 const createProject = async (req, res) => {
   try {
-    console.log('=== CREATE PROJECT ===');
-    console.log('body keys:', Object.keys(req.body));
-    console.log('body:', JSON.stringify(req.body, null, 2));
-    console.log('file:', req.file ? req.file.originalname : 'no file');
-
     const data = parseProjectBody(req.body);
-    console.log('parsed data:', JSON.stringify(data, null, 2));
-
-    if (req.file) data.image = await uploadToCloudinary(req.file);
+    if (req.file) {
+      data.image = await uploadToCloudinary(req.file);
+    } else {
+      delete data.image;
+    }
     const project = await Project.create(data);
     res.status(201).json(project);
   } catch (err) {
-    console.log('=== CREATE ERROR ===');
-    console.log('message:', err.message);
-    console.log('full error:', err);
+    console.log('CREATE ERROR:', err.message);
     res.status(400).json({ message: 'Validation error', error: err.message });
   }
 };
 
 const updateProject = async (req, res) => {
   try {
-    console.log('=== UPDATE PROJECT ===');
-    console.log('id:', req.params.id);
-    console.log('body keys:', Object.keys(req.body));
-    console.log('body:', JSON.stringify(req.body, null, 2));
-    console.log('file:', req.file ? req.file.originalname : 'no file');
-
     const data = parseProjectBody(req.body);
-    console.log('parsed data:', JSON.stringify(data, null, 2));
-
-    if (req.file) data.image = await uploadToCloudinary(req.file);
+    if (req.file) {
+      data.image = await uploadToCloudinary(req.file);
+    } else {
+      delete data.image;
+    }
     const project = await Project.findByIdAndUpdate(
-      req.params.id, data, { new: true, runValidators: true }
+      req.params.id,
+      data,
+      { new: true, runValidators: true }
     );
     if (!project) return res.status(404).json({ message: 'Not found' });
     res.json(project);
   } catch (err) {
-    console.log('=== UPDATE ERROR ===');
-    console.log('message:', err.message);
-    console.log('full error:', err);
+    console.log('UPDATE ERROR:', err.message);
     res.status(400).json({ message: 'Validation error', error: err.message });
   }
 };
@@ -82,24 +73,15 @@ function parseProjectBody(body) {
   const jsonFields = ['technologies', 'features', 'apiEndpoints', 'challenges', 'architecture'];
 
   jsonFields.forEach((field) => {
-    if (!data[field] || data[field] === '' || data[field] === 'undefined') {
-      if (field === 'architecture') {
-        data[field] = { description: '', layers: [] };
-      } else {
-        data[field] = [];
-      }
+    if (!data[field] || data[field] === '' || data[field] === 'undefined' || data[field] === 'null') {
+      data[field] = field === 'architecture' ? { description: '', layers: [] } : [];
       return;
     }
     if (typeof data[field] === 'string') {
       try {
         data[field] = JSON.parse(data[field]);
-      } catch (e) {
-        // If JSON.parse fails, set safe default
-        if (field === 'architecture') {
-          data[field] = { description: '', layers: [] };
-        } else {
-          data[field] = [];
-        }
+      } catch {
+        data[field] = field === 'architecture' ? { description: '', layers: [] } : [];
       }
     }
   });
@@ -108,6 +90,13 @@ function parseProjectBody(body) {
     data.featured = data.featured === 'true' || data.featured === true;
   if (data.order !== undefined)
     data.order = Number(data.order) || 0;
+
+  if (data.image !== undefined && typeof data.image !== 'string') {
+    delete data.image;
+  }
+  if (data.image === '' || data.image === 'null' || data.image === 'undefined') {
+    delete data.image;
+  }
 
   return data;
 }

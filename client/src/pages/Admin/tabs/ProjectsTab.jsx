@@ -46,7 +46,7 @@ function ProjectsTab() {
   });
 
   fd.append('featured', form.featured);
-  fd.append('order', form.order || 0);
+  fd.append('order',    form.order || 0);
 
   const technologies = form.technologies
     ? form.technologies.split(',').map((t) => t.trim()).filter(Boolean)
@@ -69,10 +69,7 @@ function ProjectsTab() {
         .filter(Boolean)
         .map((block) => {
           const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
-          return {
-            problem:  lines[0] || '',
-            solution: lines.slice(1).join(' ') || '',
-          };
+          return { problem: lines[0] || '', solution: lines.slice(1).join(' ') || '' };
         })
         .filter((c) => c.problem && c.solution)
     : [];
