@@ -32,52 +32,6 @@ app.use((req, res, next) => {
   express.json()(req, res, next);
 });
 
-// ── Debug routes ──
-app.get('/api/debug-env', (req, res) => {
-  res.json({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING',
-    api_key:    process.env.CLOUDINARY_API_KEY    ? 'SET' : 'MISSING',
-    api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
-    node_env:   process.env.NODE_ENV,
-    client_url: process.env.CLIENT_URL || 'MISSING',
-  });
-});
-
-app.post('/api/debug-upload', require('./middleware/upload').single('image'), async (req, res) => {
-  try {
-    console.log('debug-upload hit');
-    console.log('file:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'NO FILE');
-
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file received by multer' });
-    }
-
-    const cloudinary = require('./utils/cloudinary');
-
-    const url = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: 'portfolio/test', resource_type: 'image' },
-        (err, result) => {
-          if (err) {
-            console.log('Cloudinary error:', err.message);
-            return reject(err);
-          }
-          resolve(result.secure_url);
-        }
-      );
-      stream.on('error', (e) => reject(e));
-      stream.end(req.file.buffer);
-    });
-
-    console.log('Upload success:', url);
-    res.json({ success: true, url });
-  } catch (err) {
-    console.log('Debug upload error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ── Main routes ──
 app.use('/api/projects',   require('./routes/projects'));
 app.use('/api/skills',     require('./routes/skills'));
 app.use('/api/hero',       require('./routes/hero'));
