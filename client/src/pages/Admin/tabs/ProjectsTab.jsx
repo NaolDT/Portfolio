@@ -11,19 +11,22 @@ const EMPTY = {
 const CATEGORIES = ['Full Stack', 'Frontend', 'Backend', 'Academic'];
 
 function ProjectsTab() {
-  const { token }               = useAdmin();
-  const [projects, setProjects] = useState([]);
-  const [form, setForm]         = useState(EMPTY);
-  const [editId, setEditId]     = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading]   = useState(false);
-  const [msg, setMsg]           = useState(null);
-  const fileRef                 = useRef();
-  const headers = { Authorization: `Bearer ${token}` };
+  const { token }                   = useAdmin();
+  const [projects, setProjects]     = useState([]);
+  const [form, setForm]             = useState(EMPTY);
+  const [editId, setEditId]         = useState(null);
+  const [loading, setLoading]       = useState(false);
+  const [msg, setMsg]               = useState(null);
 
-  const flash  = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg(null), 3500); };
-  const fetch  = () => api.get('/api/projects').then((r) => setProjects(r.data));
+  const [existingImages, setExistingImages] = useState([]);
+  const [newFiles, setNewFiles]             = useState([]);
+  const [newPreviews, setNewPreviews]       = useState([]);
+  const fileRef = useRef();
+
+  const headers = { Authorization: `Bearer ${token}` };
+  const flash   = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg(null), 3500); };
+  const fetch   = () => api.get('/api/projects').then((r) => setProjects(r.data));
+
   useEffect(() => { fetch(); }, []);
 
   const handleChange = (e) => {
@@ -31,94 +34,130 @@ function ProjectsTab() {
     setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleImage = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+  const handleImageSelect = (e) => {
+    const selected = Array.from(e.target.files);
+    const totalAllowed = 5 - existingImages.length;
+    const toAdd = selected.slice(0, totalAllowed);
+
+    newPreviews.forEach((url) => URL.revokeObjectURL(url));
+
+    const combined = [...newFiles, ...toAdd].slice(0, totalAllowed);
+    setNewFiles(combined);
+    setNewPreviews(combined.map((f) => URL.createObjectURL(f)));
+
+    if (fileRef.current) fileRef.current.value = '';
   };
 
- const buildFormData = () => {
-  const fd = new FormData();
+  const removeExisting = (index) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  ['title', 'category', 'status', 'tagline', 'overview', 'contribution', 'githubUrl', 'liveUrl'].forEach((k) => {
-    fd.append(k, form[k] || '');
-  });
+  const removeNew = (index) => {
+    URL.revokeObjectURL(newPreviews[index]);
+    setNewFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  fd.append('featured', form.featured);
-  fd.append('order',    form.order || 0);
+  const totalImages = existingImages.length + newFiles.length;
+  const canAddMore  = totalImages < 5;
 
-  const technologies = form.technologies
-    ? form.technologies.split(',').map((t) => t.trim()).filter(Boolean)
-    : [];
-  fd.append('technologies', JSON.stringify(technologies));
+  const buildFormData = () => {
+    const fd = new FormData();
 
-  const features = form.features
-    ? form.features.split('\n').map((f) => f.trim()).filter(Boolean)
-    : [];
-  fd.append('features', JSON.stringify(features));
+    ['title', 'category', 'status', 'tagline', 'overview', 'contribution', 'githubUrl', 'liveUrl'].forEach((k) => {
+      fd.append(k, form[k] || '');
+    });
+    fd.append('featured', form.featured);
+    fd.append('order',    form.order || 0);
 
-  const apiEndpoints = form.apiEndpoints
-    ? form.apiEndpoints.split('\n').map((e) => e.trim()).filter(Boolean)
-    : [];
-  fd.append('apiEndpoints', JSON.stringify(apiEndpoints));
+    fd.append('technologies', JSON.stringify(
+      form.technologies ? form.technologies.split(',').map((t) => t.trim()).filter(Boolean) : []
+    ));
 
-  const challenges = form.challenges
-    ? form.challenges
-        .split('\n\n')
-        .filter(Boolean)
-        .map((block) => {
+    fd.append('features', JSON.stringify(
+      form.features ? form.features.split('\n').map((f) => f.trim()).filter(Boolean) : []
+    ));
+
+    fd.append('apiEndpoints', JSON.stringify(
+      form.apiEndpoints ? form.apiEndpoints.split('\n').map((e) => e.trim()).filter(Boolean) : []
+    ));
+
+    const challenges = form.challenges
+      ? form.challenges.split('\n\n').filter(Boolean).map((block) => {
           const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
           return { problem: lines[0] || '', solution: lines.slice(1).join(' ') || '' };
-        })
-        .filter((c) => c.problem && c.solution)
-    : [];
-  fd.append('challenges', JSON.stringify(challenges));
+        }).filter((c) => c.problem && c.solution)
+      : [];
+    fd.append('challenges', JSON.stringify(challenges));
 
-  fd.append('architecture', JSON.stringify({ description: '', layers: [] }));
+    fd.append('architecture', JSON.stringify({ description: '', layers: [] }));
 
-  if (imageFile) fd.append('image', imageFile);
+    fd.append('existingImages', JSON.stringify(existingImages));
 
-  return fd;
-};
+    newFiles.forEach((file) => fd.append('images', file));
+
+    return fd;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setLoading(true);
     try {
       const fd = buildFormData();
       if (editId) {
-  await api.put(`/api/projects/${editId}`, fd, { headers });
-  flash('Project updated ✓');
-} else {
-  await api.post('/api/projects', fd, { headers });
-  flash('Project added ✓');
-}
-      setForm(EMPTY); setEditId(null); setImageFile(null); setImagePreview(null);
-      if (fileRef.current) fileRef.current.value = '';
+        await api.put(`/api/projects/${editId}`, fd, { headers });
+        flash('Project updated ✓');
+      } else {
+        await api.post('/api/projects', fd, { headers });
+        flash('Project added ✓');
+      }
+      resetForm();
       fetch();
-    } catch (err) { flash(err.response?.data?.message || 'Save failed', true); }
-    finally { setLoading(false); }
+    } catch (err) {
+      flash(err.response?.data?.message || 'Save failed', true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm(EMPTY);
+    setEditId(null);
+    setExistingImages([]);
+    newPreviews.forEach((url) => URL.revokeObjectURL(url));
+    setNewFiles([]);
+    setNewPreviews([]);
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const handleEdit = (p) => {
     setEditId(p._id);
-    setImagePreview(p.image || null);
-    setImageFile(null);
+    setExistingImages(p.images || []);
+    setNewFiles([]);
+    setNewPreviews([]);
     setForm({
-      title: p.title, category: p.category, status: p.status, featured: p.featured,
-      tagline: p.tagline || '', overview: p.overview || '', contribution: p.contribution || '',
+      title:        p.title        || '',
+      category:     p.category     || 'Full Stack',
+      status:       p.status       || 'active',
+      featured:     p.featured     || false,
+      tagline:      p.tagline      || '',
+      overview:     p.overview     || '',
+      contribution: p.contribution || '',
       technologies: (p.technologies || []).join(', '),
-      features: (p.features || []).join('\n'),
+      features:     (p.features     || []).join('\n'),
       apiEndpoints: (p.apiEndpoints || []).join('\n'),
-      challenges: (p.challenges || []).map((c) => `${c.problem}\n${c.solution}`).join('\n\n'),
-      githubUrl: p.githubUrl || '', liveUrl: p.liveUrl || '', order: p.order || 0,
+      challenges:   (p.challenges   || []).map((c) => `${c.problem}\n${c.solution}`).join('\n\n'),
+      githubUrl:    p.githubUrl || '',
+      liveUrl:      p.liveUrl   || '',
+      order:        p.order     || 0,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id, title) => {
     if (!window.confirm(`Delete "${title}"?`)) return;
-    await api.delete(`/api/projects/${id}`, { headers }); flash('Deleted'); fetch();
+    await api.delete(`/api/projects/${id}`, { headers });
+    flash('Deleted');
+    fetch();
   };
 
   return (
@@ -126,8 +165,11 @@ function ProjectsTab() {
       <div className="adm-card">
         <div className="adm-card-header">
           <h3 className="adm-card-title">{editId ? 'Edit Project' : 'Add New Project'}</h3>
-          <p className="adm-card-desc">Manage portfolio projects. Screenshot uploads go directly to Cloudinary.</p>
+          <p className="adm-card-desc">
+            Manage portfolio projects. Upload up to 5 screenshots per project — they display as a carousel on the portfolio.
+          </p>
         </div>
+
         <form onSubmit={handleSubmit} className="adm-form">
 
           <div className="adm-form-grid-2">
@@ -189,7 +231,7 @@ function ProjectsTab() {
           <div className="adm-field">
             <label>Engineering Challenges</label>
             <textarea name="challenges" value={form.challenges} onChange={handleChange} rows={6} placeholder={"Problem description\nSolution description\n\nSecond problem\nSecond solution"} />
-            <span className="adm-hint">Each challenge is two lines: line 1 = problem, line 2 = solution. Separate multiple challenges with a blank line.</span>
+            <span className="adm-hint">Each challenge: line 1 = problem, line 2 = solution. Separate multiple with a blank line.</span>
           </div>
 
           <div className="adm-field">
@@ -216,24 +258,81 @@ function ProjectsTab() {
           </div>
 
           <div className="adm-field">
-            <label>Project Screenshot</label>
-            <div className="adm-image-upload">
-              {imagePreview && (
-                <div className="adm-image-preview">
-                  <img src={imagePreview} alt="Preview" />
-                  <button
-                    type="button"
-                    className="adm-image-remove"
-                    onClick={() => { setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ''; }}
-                  >✕ Remove</button>
-                </div>
-              )}
+            <label>Screenshots ({totalImages}/5)</label>
+
+            {(existingImages.length > 0 || newFiles.length > 0) && (
+              <div className="adm-images-grid">
+
+                {existingImages.map((url, i) => (
+                  <div className="adm-image-thumb" key={`existing-${i}`}>
+                    <img src={url} alt={`Screenshot ${i + 1}`} />
+                    <div className="adm-image-thumb-overlay">
+                      <span className="adm-image-thumb-label">Saved</span>
+                      <button
+                        type="button"
+                        className="adm-image-thumb-remove"
+                        onClick={() => removeExisting(i)}
+                        title="Remove this screenshot"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {newPreviews.map((url, i) => (
+                  <div className="adm-image-thumb adm-image-thumb-new" key={`new-${i}`}>
+                    <img src={url} alt={`New screenshot ${i + 1}`} />
+                    <div className="adm-image-thumb-overlay">
+                      <span className="adm-image-thumb-label">New</span>
+                      <button
+                        type="button"
+                        className="adm-image-thumb-remove"
+                        onClick={() => removeNew(i)}
+                        title="Remove this screenshot"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add more slot */}
+                {canAddMore && (
+                  <label className="adm-image-thumb adm-image-thumb-add">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageSelect}
+                      style={{ display: 'none' }}
+                    />
+                    <span className="adm-add-icon">+</span>
+                    <span className="adm-add-label">Add photo</span>
+                  </label>
+                )}
+              </div>
+            )}
+
+            {existingImages.length === 0 && newFiles.length === 0 && (
               <label className="adm-upload-btn">
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
-                {imagePreview ? '📷 Change screenshot' : '📷 Upload screenshot'}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  style={{ display: 'none' }}
+                />
+                📷 Upload screenshots (up to 5)
               </label>
-              <span className="adm-hint">JPG, PNG, WEBP up to 5MB. Uploads directly to Cloudinary.</span>
-            </div>
+            )}
+
+            <span className="adm-hint">
+              JPG, PNG, WEBP up to 5MB each. First image is the cover shown on the project card.
+              Uploads go directly to Cloudinary.
+            </span>
           </div>
 
           {msg && <div className={`adm-flash ${msg.error ? 'adm-flash-error' : ''}`}>{msg.text}</div>}
@@ -243,9 +342,9 @@ function ProjectsTab() {
               {loading ? 'Saving...' : editId ? 'Update project' : 'Add project'}
             </button>
             {editId && (
-              <button className="adm-btn-ghost" type="button" onClick={() => {
-                setForm(EMPTY); setEditId(null); setImageFile(null); setImagePreview(null);
-              }}>Cancel</button>
+              <button className="adm-btn-ghost" type="button" onClick={resetForm}>
+                Cancel
+              </button>
             )}
           </div>
         </form>
@@ -253,13 +352,15 @@ function ProjectsTab() {
 
       <div className="adm-card">
         <h3 className="adm-card-title">All Projects ({projects.length})</h3>
-        {projects.length === 0 ? <p className="adm-empty">No projects yet. Add one above.</p> : (
+        {projects.length === 0 ? (
+          <p className="adm-empty">No projects yet. Add one above.</p>
+        ) : (
           <div className="adm-list">
             {projects.map((p) => (
               <div className="adm-list-item" key={p._id}>
                 <div className="adm-list-thumb">
-                  {p.image
-                    ? <img src={p.image} alt={p.title} />
+                  {p.images?.[0]
+                    ? <img src={p.images[0]} alt={p.title} />
                     : <div className="adm-list-thumb-empty">🖼</div>
                   }
                 </div>
@@ -269,10 +370,13 @@ function ProjectsTab() {
                     <span className={`adm-badge adm-badge-${p.status === 'active' ? 'cyan' : 'purple'}`}>{p.status}</span>
                     <span className="adm-badge adm-badge-muted">{p.category}</span>
                     {p.featured && <span className="adm-badge adm-badge-yellow">featured</span>}
+                    <span className="adm-badge adm-badge-muted">
+                      {p.images?.length || 0} photo{p.images?.length !== 1 ? 's' : ''}
+                    </span>
                   </div>
                 </div>
                 <div className="adm-list-actions">
-                  <button className="adm-btn-edit" onClick={() => handleEdit(p)}>Edit</button>
+                  <button className="adm-btn-edit"   onClick={() => handleEdit(p)}>Edit</button>
                   <button className="adm-btn-delete" onClick={() => handleDelete(p._id, p.title)}>Delete</button>
                 </div>
               </div>
