@@ -22,12 +22,23 @@ const getProject = async (req, res) => {
 
 const createProject = async (req, res) => {
   try {
-    const data = parseProjectBody(req.body);
+    let imageUrl = null;
     if (req.file) {
-      data.image = await uploadToCloudinary(req.file);
-    } else {
-      delete data.image;
+      try {
+        imageUrl = await uploadToCloudinary(req.file);
+        console.log('Cloudinary URL:', imageUrl);
+      } catch (uploadErr) {
+        console.log('Upload failed:', uploadErr.message);
+        return res.status(500).json({ message: 'Image upload failed', error: uploadErr.message });
+      }
     }
+
+    const data = parseProjectBody(req.body);
+
+    if (imageUrl) {
+      data.image = imageUrl;
+    }
+
     const project = await Project.create(data);
     res.status(201).json(project);
   } catch (err) {
@@ -38,12 +49,23 @@ const createProject = async (req, res) => {
 
 const updateProject = async (req, res) => {
   try {
-    const data = parseProjectBody(req.body);
+    let imageUrl = null;
     if (req.file) {
-      data.image = await uploadToCloudinary(req.file);
-    } else {
-      delete data.image;
+      try {
+        imageUrl = await uploadToCloudinary(req.file);
+        console.log('Cloudinary URL:', imageUrl);
+      } catch (uploadErr) {
+        console.log('Upload failed:', uploadErr.message);
+        return res.status(500).json({ message: 'Image upload failed', error: uploadErr.message });
+      }
     }
+
+    const data = parseProjectBody(req.body);
+
+    if (imageUrl) {
+      data.image = imageUrl;
+    }
+
     const project = await Project.findByIdAndUpdate(
       req.params.id,
       data,
@@ -70,6 +92,8 @@ const deleteProject = async (req, res) => {
 function parseProjectBody(body) {
   const data = { ...body };
 
+  delete data.image;
+
   const jsonFields = ['technologies', 'features', 'apiEndpoints', 'challenges', 'architecture'];
 
   jsonFields.forEach((field) => {
@@ -91,27 +115,31 @@ function parseProjectBody(body) {
   if (data.order !== undefined)
     data.order = Number(data.order) || 0;
 
-  if (data.image !== undefined && typeof data.image !== 'string') {
-    delete data.image;
-  }
-  if (data.image === '' || data.image === 'null' || data.image === 'undefined') {
-    delete data.image;
-  }
-
   return data;
 }
 
 async function uploadToCloudinary(file) {
   return new Promise((resolve, reject) => {
-    cloudinary.uploader
-      .upload_stream(
-        { folder: 'portfolio/projects', resource_type: 'image' },
-        (err, result) => {
-          if (err) return reject(err);
-          resolve(result.secure_url);
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder:        'portfolio/projects',
+        resource_type: 'image',
+        timeout:       60000,
+      },
+      (error, result) => {
+        if (error) {
+          console.log('Cloudinary error:', error.message);
+          return reject(new Error(`Cloudinary upload failed: ${error.message}`));
         }
-      )
-      .end(file.buffer);
+        if (!result || !result.secure_url) {
+          return reject(new Error('Cloudinary returned no URL'));
+        }
+        resolve(result.secure_url);
+      }
+    );
+
+    stream.on('error', (err) => reject(new Error(`Stream error: ${err.message}`)));
+    stream.end(file.buffer);
   });
 }
 
