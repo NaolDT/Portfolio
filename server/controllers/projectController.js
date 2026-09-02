@@ -22,22 +22,11 @@ const getProject = async (req, res) => {
 
 const createProject = async (req, res) => {
   try {
-    let imageUrl = null;
-    if (req.file) {
-      try {
-        imageUrl = await uploadToCloudinary(req.file);
-        console.log('Cloudinary URL:', imageUrl);
-      } catch (uploadErr) {
-        console.log('Upload failed:', uploadErr.message);
-        return res.status(500).json({ message: 'Image upload failed', error: uploadErr.message });
-      }
-    }
+    const newImageUrls = await uploadAllFiles(req.files || []);
 
     const data = parseProjectBody(req.body);
 
-    if (imageUrl) {
-      data.image = imageUrl;
-    }
+    data.images = newImageUrls;
 
     const project = await Project.create(data);
     res.status(201).json(project);
@@ -49,22 +38,19 @@ const createProject = async (req, res) => {
 
 const updateProject = async (req, res) => {
   try {
-    let imageUrl = null;
-    if (req.file) {
-      try {
-        imageUrl = await uploadToCloudinary(req.file);
-        console.log('Cloudinary URL:', imageUrl);
-      } catch (uploadErr) {
-        console.log('Upload failed:', uploadErr.message);
-        return res.status(500).json({ message: 'Image upload failed', error: uploadErr.message });
-      }
-    }
+    const newImageUrls = await uploadAllFiles(req.files || []);
 
     const data = parseProjectBody(req.body);
 
-    if (imageUrl) {
-      data.image = imageUrl;
+    let existingImages = [];
+    if (req.body.existingImages) {
+      try {
+        existingImages = JSON.parse(req.body.existingImages);
+        if (!Array.isArray(existingImages)) existingImages = [];
+      } catch { existingImages = []; }
     }
+
+    data.images = [...existingImages, ...newImageUrls].slice(0, 5);
 
     const project = await Project.findByIdAndUpdate(
       req.params.id,
@@ -89,10 +75,33 @@ const deleteProject = async (req, res) => {
   }
 };
 
+async function uploadAllFiles(files) {
+  if (!files || files.length === 0) return [];
+  const uploads = files.map((file) => uploadToCloudinary(file));
+  return Promise.all(uploads);
+}
+
+async function uploadToCloudinary(file) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'portfolio/projects', resource_type: 'image', timeout: 60000 },
+      (error, result) => {
+        if (error) return reject(new Error(`Cloudinary upload failed: ${error.message}`));
+        if (!result || !result.secure_url) return reject(new Error('Cloudinary returned no URL'));
+        resolve(result.secure_url);
+      }
+    );
+    stream.on('error', (err) => reject(new Error(`Stream error: ${err.message}`)));
+    stream.end(file.buffer);
+  });
+}
+
 function parseProjectBody(body) {
   const data = { ...body };
 
   delete data.image;
+  delete data.images;
+  delete data.existingImages;
 
   const jsonFields = ['technologies', 'features', 'apiEndpoints', 'challenges', 'architecture'];
 
@@ -116,31 +125,6 @@ function parseProjectBody(body) {
     data.order = Number(data.order) || 0;
 
   return data;
-}
-
-async function uploadToCloudinary(file) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder:        'portfolio/projects',
-        resource_type: 'image',
-        timeout:       60000,
-      },
-      (error, result) => {
-        if (error) {
-          console.log('Cloudinary error:', error.message);
-          return reject(new Error(`Cloudinary upload failed: ${error.message}`));
-        }
-        if (!result || !result.secure_url) {
-          return reject(new Error('Cloudinary returned no URL'));
-        }
-        resolve(result.secure_url);
-      }
-    );
-
-    stream.on('error', (err) => reject(new Error(`Stream error: ${err.message}`)));
-    stream.end(file.buffer);
-  });
 }
 
 module.exports = { getProjects, getProject, createProject, updateProject, deleteProject };

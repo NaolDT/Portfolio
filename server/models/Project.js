@@ -28,7 +28,7 @@ const projectSchema = new mongoose.Schema({
   technologies: [String],
   architecture: architectureSchema,
   apiEndpoints: [String],
-  image:        { type: String, default: null },
+  images:       { type: [String], default: [] },
   githubUrl:    { type: String, default: '' },
   liveUrl:      { type: String, default: '' },
   order:        { type: Number, default: 0 },
