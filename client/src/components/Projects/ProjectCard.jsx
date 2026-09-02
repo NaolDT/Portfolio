@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import './ProjectCard.css';
 
 const GitHubIcon = () => (
@@ -15,13 +16,72 @@ const ExternalIcon = () => (
 );
 
 function ProjectCard({ project, onLearnMore }) {
-  const { title, tagline, technologies, status, featured, category, githubUrl, liveUrl, image } = project;
+  const {
+    title, tagline, technologies, status,
+    featured, category, githubUrl, liveUrl, images,
+  } = project;
+
+  const imgs = images?.length > 0 ? images : [];
+
+  const [current, setCurrent]   = useState(0);
+  const [hovered, setHovered]   = useState(false);
+  const [fading, setFading]     = useState(false);
+  const intervalRef             = useRef(null);
+
+  useEffect(() => {
+    if (hovered && imgs.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setFading(true);
+        setTimeout(() => {
+          setCurrent((prev) => (prev + 1) % imgs.length);
+          setFading(false);
+        }, 300);
+      }, 3000);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [hovered, imgs.length]);
+
+  useEffect(() => {
+    if (!hovered) {
+      setFading(true);
+      const t = setTimeout(() => {
+        setCurrent(0);
+        setFading(false);
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [hovered]);
 
   return (
-    <article className={`proj-card ${featured ? 'featured' : ''}`} aria-label={title}>
+    <article
+      className={`proj-card ${featured ? 'featured' : ''}`}
+      aria-label={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div className="proj-image" aria-hidden="true">
-        {image ? (
-          <img src={image} alt={`${title} screenshot`} loading="lazy" />
+        {imgs.length > 0 ? (
+          <>
+            <img
+              src={imgs[current]}
+              alt={`${title} screenshot ${current + 1}`}
+              loading="lazy"
+              className={`proj-carousel-img ${fading ? 'fading' : ''}`}
+            />
+            {/* Dot indicators — only if multiple images */}
+            {imgs.length > 1 && (
+              <div className="proj-carousel-dots">
+                {imgs.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`proj-carousel-dot ${i === current ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div className="proj-image-placeholder">
             <span className="placeholder-label">Screenshot coming soon</span>
