@@ -6,8 +6,9 @@ const certificationSchema = new mongoose.Schema({
   year:      { type: String, default: '' },
   note:      { type: String, default: '' },
   status:    { type: String, default: 'Earned' },
-  fileUrl:   { type: String, default: '' },  
+  fileUrl:   { type: String, default: '' },
   fileType:  { type: String, default: '' },  
+  fileName:  { type: String, default: '' },  
 }, { _id: false });
 
 const educationSchema = new mongoose.Schema({

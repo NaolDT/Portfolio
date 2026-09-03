@@ -13,15 +13,12 @@ const getEducation = async (req, res) => {
 
 const updateEducation = async (req, res) => {
   try {
-    const {
-      degree, university, faculty, period,
-      courses, certNote, certifications,
-    } = req.body;
+    const { degree, university, faculty, period, courses, certNote, certifications } = req.body;
 
     let parsedCourses = [];
     if (courses) {
       try { parsedCourses = JSON.parse(courses); }
-      catch { parsedCourses = courses.split('\n').map(c => c.trim()).filter(Boolean); }
+      catch { parsedCourses = courses.split('\n').map((c) => c.trim()).filter(Boolean); }
     }
 
     let parsedCerts = [];
@@ -32,7 +29,6 @@ const updateEducation = async (req, res) => {
 
     if (req.files) {
       for (const key of Object.keys(req.files)) {
-        // key format: certFile_0, certFile_1, etc.
         const match = key.match(/^certFile_(\d+)$/);
         if (!match) continue;
         const idx  = parseInt(match[1]);
@@ -40,10 +36,12 @@ const updateEducation = async (req, res) => {
         if (!file || !parsedCerts[idx]) continue;
 
         const isPdf = file.mimetype === 'application/pdf';
-        const url   = await uploadToCloudinary(file, isPdf);
 
-        parsedCerts[idx].fileUrl  = url;
+        const result = await uploadToCloudinary(file, isPdf);
+
+        parsedCerts[idx].fileUrl  = result.url;
         parsedCerts[idx].fileType = isPdf ? 'pdf' : 'image';
+        parsedCerts[idx].fileName = file.originalname;
       }
     }
 
@@ -62,7 +60,7 @@ const updateEducation = async (req, res) => {
       doc.period         = period         || doc.period;
       doc.courses        = parsedCourses;
       doc.certifications = parsedCerts;
-      doc.certNote       = certNote || '';
+      doc.certNote       = certNote       || '';
       await doc.save();
     }
 
@@ -75,18 +73,44 @@ const updateEducation = async (req, res) => {
 
 async function uploadToCloudinary(file, isPdf) {
   return new Promise((resolve, reject) => {
-    const resourceType = isPdf ? 'raw' : 'image';
-    const folder       = isPdf ? 'portfolio/certificates/pdf' : 'portfolio/certificates/images';
+    const options = isPdf
+      ? {
+          resource_type: 'raw',
+          folder:        'portfolio/certificates',
+          use_filename:  true,
+          unique_filename: true,
+          format:        'pdf',
+        }
+      : {
+          resource_type: 'image',
+          folder:        'portfolio/certificates',
+          use_filename:  true,
+          unique_filename: true,
+        };
 
     const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: resourceType, timeout: 60000 },
+      options,
       (error, result) => {
-        if (error) return reject(new Error(`Cloudinary upload failed: ${error.message}`));
-        if (!result?.secure_url) return reject(new Error('No URL returned'));
-        resolve(result.secure_url);
+        if (error) {
+          console.log('Cloudinary cert upload error:', error.message);
+          return reject(new Error(`Upload failed: ${error.message}`));
+        }
+        if (!result?.secure_url) {
+          return reject(new Error('No URL returned from Cloudinary'));
+        }
+
+        let url = result.secure_url;
+
+        if (isPdf && !url.endsWith('.pdf')) {
+          url = url + '.pdf';
+        }
+
+        console.log(`Cert uploaded (${isPdf ? 'PDF' : 'image'}):`, url);
+        resolve({ url, publicId: result.public_id });
       }
     );
-    stream.on('error', (err) => reject(err));
+
+    stream.on('error', (err) => reject(new Error(`Stream error: ${err.message}`)));
     stream.end(file.buffer);
   });
 }

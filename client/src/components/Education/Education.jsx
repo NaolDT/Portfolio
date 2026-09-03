@@ -67,12 +67,20 @@ function CertCard({ cert }) {
   const isImage  = cert.fileType === 'image';
 
   const handleView = () => {
-    if (isPdf) {
-      window.open(cert.fileUrl, '_blank', 'noreferrer');
-    } else if (isImage) {
-      setLightboxOpen(true);
+  if (isPdf) {
+    let viewUrl = cert.fileUrl;
+    if (viewUrl.includes('cloudinary.com') && viewUrl.includes('/raw/upload/')) {
+      viewUrl = viewUrl.replace('/raw/upload/', '/raw/upload/fl_attachment:false/');
     }
-  };
+
+    window.open(viewUrl, '_blank', 'noreferrer');
+        const googleViewer = `https://docs.google.com/viewer?url=${encodeURIComponent(cert.fileUrl)}&embedded=false`;
+    window.open(googleViewer, '_blank', 'noreferrer');
+
+  } else if (isImage) {
+    setLightboxOpen(true);
+  }
+};
 
   return (
     <>
