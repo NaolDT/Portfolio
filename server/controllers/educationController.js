@@ -1,6 +1,5 @@
 const Education  = require('../models/Education');
 const cloudinary = require('../utils/cloudinary');
-const path       = require('path');
 
 const getEducation = async (req, res) => {
   try {
@@ -72,40 +71,44 @@ const updateEducation = async (req, res) => {
 
 async function uploadToCloudinary(file, isPdf) {
   return new Promise((resolve, reject) => {
-    if (isPdf) {
-      const timestamp  = Date.now();
-      const public_id  = `portfolio/certificates/pdf/cert_${timestamp}`;
+    const timestamp = Date.now();
 
+    if (isPdf) {
       cloudinary.uploader.upload_stream(
         {
-          resource_type: 'raw',
-          public_id,
-          format:        'pdf',    
+          resource_type: 'image',
+          folder:        'portfolio/certificates',
+          public_id:     `cert_${timestamp}`,
+          format:        'pdf',
+          type:          'upload',
+          access_mode:   'public',
           timeout:       60000,
         },
         (error, result) => {
-          if (error) return reject(new Error(`Cloudinary PDF upload failed: ${error.message}`));
+          if (error) {
+            console.log('Cloudinary PDF error:', error.message);
+            return reject(new Error(`PDF upload failed: ${error.message}`));
+          }
           if (!result?.secure_url) return reject(new Error('No URL returned'));
 
-          let url = result.secure_url;
-          if (!url.endsWith('.pdf')) url = url + '.pdf';
-
+          const url = result.secure_url;
+          console.log('PDF uploaded:', url);
           resolve({ url, fileType: 'pdf' });
         }
       ).end(file.buffer);
 
     } else {
-      const timestamp = Date.now();
-      const public_id = `portfolio/certificates/images/cert_${timestamp}`;
-
       cloudinary.uploader.upload_stream(
         {
           resource_type: 'image',
-          public_id,
+          folder:        'portfolio/certificates',
+          public_id:     `cert_${timestamp}`,
+          type:          'upload',
+          access_mode:   'public',
           timeout:       60000,
         },
         (error, result) => {
-          if (error) return reject(new Error(`Cloudinary image upload failed: ${error.message}`));
+          if (error) return reject(new Error(`Image upload failed: ${error.message}`));
           if (!result?.secure_url) return reject(new Error('No URL returned'));
           resolve({ url: result.secure_url, fileType: 'image' });
         }
