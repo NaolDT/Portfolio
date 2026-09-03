@@ -1,22 +1,244 @@
-.edu-card { display: flex; gap: 1.5rem; align-items: flex-start; background: var(--bg-card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 2rem; }
-.edu-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--cyan-dim); border: 0.5px solid rgba(0,212,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
-.edu-degree { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.edu-org { font-size: 14px; color: var(--text-secondary); margin-bottom: 2px; }
-.edu-faculty { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-.edu-period { font-family: var(--font-mono); font-size: 11px; color: var(--cyan); margin-bottom: 1.25rem; }
-.edu-courses-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 0.6rem; }
+.edu-card {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.edu-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: var(--cyan-dim);
+  border: 0.5px solid rgba(0,212,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+
+.edu-right { flex: 1; min-width: 0; }
+
+.edu-degree {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 4px;
+}
+.edu-org {
+  font-size: 14px; color: var(--text-secondary); margin-bottom: 2px;
+}
+.edu-faculty {
+  font-size: 12px; color: var(--text-muted); margin-bottom: 4px;
+}
+.edu-period {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--cyan); margin-bottom: 1.25rem;
+}
+
+.edu-courses-label {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-muted); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 0.6rem;
+}
 .edu-courses { display: flex; flex-wrap: wrap; gap: 6px; }
-.edu-course { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.04); border: 0.5px solid var(--border-soft); padding: 4px 9px; border-radius: 4px; }
+.edu-course {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid var(--border-soft);
+  padding: 4px 9px; border-radius: 4px;
+}
 
 .cert-section { }
-.cert-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
-.cert-card { display: flex; align-items: center; gap: 1rem; background: var(--bg-card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.cert-icon { font-size: 20px; }
-.cert-right { flex: 1; min-width: 0; }
-.cert-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
-.cert-org { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; font-family: var(--font-mono); }
-.cert-note { font-size: 12px; color: var(--text-muted); }
-.cert-badge { font-family: var(--font-mono); font-size: 10px; background: rgba(74,222,128,0.1); color: #4ADE80; border: 0.5px solid rgba(74,222,128,0.25); padding: 3px 8px; border-radius: 20px; }
-.cert-coming { font-size: 13px; color: var(--text-muted); font-family: var(--font-mono); line-height: 1.6; }
 
-@media (max-width: 480px) { .edu-card { flex-direction: column; gap: 1rem; } }
+.cert-title {
+  font-family: var(--font-display); font-size: 16px;
+  font-weight: 600; color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.cert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.cert-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  transition: border-color 0.2s;
+}
+.cert-card-clickable { cursor: default; }
+.cert-card:hover { border-color: rgba(0,212,255,0.2); }
+
+.cert-card-left { flex-shrink: 0; }
+
+.cert-emoji { font-size: 20px; }
+
+.cert-file-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.cert-pdf-icon {
+  background: rgba(248,113,113,0.12);
+  color: #F87171;
+  border: 0.5px solid rgba(248,113,113,0.25);
+}
+
+.cert-img-icon {
+  background: rgba(0,212,255,0.1);
+  color: var(--cyan);
+  border: 0.5px solid rgba(0,212,255,0.25);
+}
+
+.cert-card-body { flex: 1; min-width: 0; }
+
+.cert-card-name {
+  font-size: 14px; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 3px;
+}
+.cert-card-org {
+  font-size: 12px; color: var(--text-muted);
+  font-family: var(--font-mono); margin-bottom: 2px;
+}
+.cert-card-note {
+  font-size: 12px; color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.cert-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cert-badge {
+  font-family: var(--font-mono); font-size: 10px;
+  background: rgba(74,222,128,0.1); color: #4ADE80;
+  border: 0.5px solid rgba(74,222,128,0.25);
+  padding: 3px 8px; border-radius: 20px;
+  white-space: nowrap;
+}
+
+.cert-view-btn {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border: 0.5px solid rgba(0,212,255,0.25);
+  padding: 4px 10px; border-radius: 5px;
+  cursor: pointer; white-space: nowrap;
+  transition: background 0.2s;
+}
+.cert-view-btn:hover { background: rgba(0,212,255,0.18); }
+
+.cert-coming {
+  font-size: 13px; color: var(--text-muted);
+  font-family: var(--font-mono); line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+.cert-lightbox-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+  animation: cert-fade 0.2s ease;
+}
+@keyframes cert-fade { from{opacity:0;} to{opacity:1;} }
+
+.cert-lightbox-close {
+  position: absolute; top: 1rem; right: 1rem;
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.08);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  border-radius: 10px; color: #fff; font-size: 16px;
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  transition: background 0.2s; z-index: 10;
+}
+.cert-lightbox-close:hover { background: rgba(255,255,255,0.16); }
+
+.cert-lightbox-content {
+  display: flex; flex-direction: column;
+  gap: 1rem; max-width: 90vw;
+  animation: cert-zoom 0.2s ease;
+}
+@keyframes cert-zoom {
+  from { opacity:0; transform: scale(0.96); }
+  to   { opacity:1; transform: scale(1); }
+}
+
+.cert-lightbox-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cert-lightbox-title {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 3px;
+}
+.cert-lightbox-org {
+  font-family: var(--font-mono);
+  font-size: 12px; color: var(--text-muted);
+}
+
+.cert-lightbox-download {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border: 0.5px solid rgba(0,212,255,0.3);
+  padding: 6px 14px; border-radius: 6px;
+  text-decoration: none; white-space: nowrap;
+  transition: background 0.2s; flex-shrink: 0;
+}
+.cert-lightbox-download:hover { background: rgba(0,212,255,0.18); }
+
+.cert-lightbox-img {
+  max-width: 90vw;
+  max-height: calc(100vh - 160px);
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .edu-card { flex-direction: column; gap: 1rem; }
+
+  .cert-card {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .cert-card-right {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cert-lightbox-overlay { padding: 0.75rem; }
+  .cert-lightbox-content { max-width: 100%; }
+  .cert-lightbox-img { max-height: calc(100vh - 180px); }
+  .cert-lightbox-header { flex-direction: column; gap: 0.75rem; }
+  .cert-lightbox-download { width: fit-content; }
+}

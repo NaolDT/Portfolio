@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './Education.css';
 import useApi from '../../hooks/useApi';
 
@@ -10,6 +11,108 @@ const FALLBACK = {
   certifications: [],
   certNote:       '',
 };
+
+function CertLightbox({ cert, onClose }) {
+  return (
+    <div
+      className="cert-lightbox-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Certificate: ${cert.name}`}
+    >
+      <button
+        className="cert-lightbox-close"
+        onClick={onClose}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+      <div
+        className="cert-lightbox-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="cert-lightbox-header">
+          <div>
+            <div className="cert-lightbox-title">{cert.name}</div>
+            <div className="cert-lightbox-org">
+              {cert.org}{cert.year ? ` — ${cert.year}` : ''}
+            </div>
+          </div>
+          <a
+            href={cert.fileUrl}
+            download
+            target="_blank"
+            rel="noreferrer"
+            className="cert-lightbox-download"
+          >
+            ↓ Download
+          </a>
+        </div>
+        <img
+          src={cert.fileUrl}
+          alt={`${cert.name} certificate`}
+          className="cert-lightbox-img"
+        />
+      </div>
+    </div>
+  );
+}
+
+function CertCard({ cert }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const hasFile  = !!cert.fileUrl;
+  const isPdf    = cert.fileType === 'pdf';
+  const isImage  = cert.fileType === 'image';
+
+  const handleView = () => {
+    if (isPdf) {
+      window.open(cert.fileUrl, '_blank', 'noreferrer');
+    } else if (isImage) {
+      setLightboxOpen(true);
+    }
+  };
+
+  return (
+    <>
+      <div className={`cert-card ${hasFile ? 'cert-card-clickable' : ''}`}>
+        <div className="cert-card-left">
+          <div className="cert-icon-wrap">
+            {isPdf   && <span className="cert-file-icon cert-pdf-icon">PDF</span>}
+            {isImage && <span className="cert-file-icon cert-img-icon">IMG</span>}
+            {!hasFile && <span className="cert-emoji">📜</span>}
+          </div>
+        </div>
+
+        <div className="cert-card-body">
+          <div className="cert-card-name">{cert.name}</div>
+          <div className="cert-card-org">
+            {cert.org}{cert.year ? ` — ${cert.year}` : ''}
+          </div>
+          {cert.note && <div className="cert-card-note">{cert.note}</div>}
+        </div>
+
+        <div className="cert-card-right">
+          <span className="cert-badge">{cert.status || 'Earned'}</span>
+          {hasFile && (
+            <button
+              className="cert-view-btn"
+              onClick={handleView}
+              aria-label={isPdf ? `Open ${cert.name} PDF` : `View ${cert.name} certificate`}
+            >
+              {isPdf   ? 'View PDF ↗' : 'View ↗'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {lightboxOpen && isImage && (
+        <CertLightbox cert={cert} onClose={() => setLightboxOpen(false)} />
+      )}
+    </>
+  );
+}
 
 function Education() {
   const { data: edu } = useApi('/api/education', FALLBACK);
@@ -27,6 +130,7 @@ function Education() {
           <div className="edu-org">{d.university}</div>
           <div className="edu-faculty">{d.faculty}</div>
           <div className="edu-period">{d.period}</div>
+
           {d.courses?.length > 0 && (
             <>
               <div className="edu-courses-label">Key coursework</div>
@@ -43,17 +147,11 @@ function Education() {
       {d.certifications?.length > 0 && (
         <div className="cert-section">
           <h3 className="cert-title">Certifications</h3>
-          {d.certifications.map((cert, i) => (
-            <div className="cert-card" key={i}>
-              <span className="cert-icon">📜</span>
-              <div className="cert-right">
-                <div className="cert-name">{cert.name}</div>
-                <div className="cert-org">{cert.org}{cert.year ? ` — ${cert.year}` : ''}</div>
-                {cert.note && <div className="cert-note">{cert.note}</div>}
-              </div>
-              <span className="cert-badge">{cert.status || 'Earned'}</span>
-            </div>
-          ))}
+          <div className="cert-list">
+            {d.certifications.map((cert, i) => (
+              <CertCard key={i} cert={cert} />
+            ))}
+          </div>
           {d.certNote && <p className="cert-coming">{d.certNote}</p>}
         </div>
       )}
