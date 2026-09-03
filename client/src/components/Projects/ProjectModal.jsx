@@ -59,7 +59,7 @@ function ProjectModal({ project, onClose }) {
     setLightboxIdx((p) => (p + 1) % imgs.length);
   }, [imgs.length]);
 
-  const openLightbox = (idx) => { setLightboxIdx(idx); setLightboxOpen(true); };
+  const openLightbox  = (idx) => { setLightboxIdx(idx); setLightboxOpen(true); };
   const closeLightbox = () => setLightboxOpen(false);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ function ProjectModal({ project, onClose }) {
       if (lightboxOpen) {
         if (e.key === 'ArrowLeft')  lightboxPrev();
         if (e.key === 'ArrowRight') lightboxNext();
-        if (e.key === 'Escape')     closeLightbox();
+        if (e.key === 'Escape')     { closeLightbox(); return; }
         return;
       }
       if (e.key === 'Escape') onClose();
@@ -85,7 +85,7 @@ function ProjectModal({ project, onClose }) {
     <>
       <div
         className="modal-overlay"
-        onClick={onClose}
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         role="dialog"
         aria-modal="true"
         aria-label={`Case study: ${title}`}
@@ -107,11 +107,10 @@ function ProjectModal({ project, onClose }) {
             <div className="modal-gallery">
               <div
                 className="modal-gallery-main"
-                onClick={() => openLightbox(activeImg)}
-                title="Click to enlarge"
+                onClick={(e) => { e.stopPropagation(); openLightbox(activeImg); }}
                 role="button"
-                aria-label="Enlarge screenshot"
                 tabIndex={0}
+                aria-label="Enlarge screenshot"
                 onKeyDown={(e) => e.key === 'Enter' && openLightbox(activeImg)}
               >
                 <img
@@ -123,6 +122,7 @@ function ProjectModal({ project, onClose }) {
                 <div className="modal-gallery-enlarge-hint">
                   <span>🔍 Click to enlarge</span>
                 </div>
+
                 {imgs.length > 1 && (
                   <>
                     <button
@@ -149,7 +149,7 @@ function ProjectModal({ project, onClose }) {
                     <button
                       key={i}
                       className={`modal-gallery-thumb ${i === activeImg ? 'active' : ''}`}
-                      onClick={() => changeImage(i)}
+                      onClick={(e) => { e.stopPropagation(); changeImage(i); }}
                       aria-label={`View screenshot ${i + 1}`}
                     >
                       <img src={url} alt={`Thumbnail ${i + 1}`} loading="lazy" />
@@ -280,14 +280,12 @@ function ProjectModal({ project, onClose }) {
           aria-modal="true"
           aria-label="Full screen screenshot"
         >
-          <button className="lightbox-close" onClick={closeLightbox} aria-label="Close lightbox">
+          <button className="lightbox-close" onClick={(e) => { e.stopPropagation(); closeLightbox(); }} aria-label="Close lightbox">
             <CloseIcon />
           </button>
 
           {imgs.length > 1 && (
-            <div className="lightbox-counter">
-              {lightboxIdx + 1} / {imgs.length}
-            </div>
+            <div className="lightbox-counter">{lightboxIdx + 1} / {imgs.length}</div>
           )}
 
           <div className="lightbox-img-wrap" onClick={(e) => e.stopPropagation()}>
@@ -300,20 +298,8 @@ function ProjectModal({ project, onClose }) {
 
           {imgs.length > 1 && (
             <>
-              <button
-                className="lightbox-arrow left"
-                onClick={lightboxPrev}
-                aria-label="Previous image"
-              >
-                <ChevronLeft />
-              </button>
-              <button
-                className="lightbox-arrow right"
-                onClick={lightboxNext}
-                aria-label="Next image"
-              >
-                <ChevronRight />
-              </button>
+              <button className="lightbox-arrow left"  onClick={lightboxPrev} aria-label="Previous image"><ChevronLeft /></button>
+              <button className="lightbox-arrow right" onClick={lightboxNext} aria-label="Next image"><ChevronRight /></button>
             </>
           )}
 
@@ -323,7 +309,7 @@ function ProjectModal({ project, onClose }) {
                 <button
                   key={i}
                   className={`lightbox-thumb ${i === lightboxIdx ? 'active' : ''}`}
-                  onClick={() => setLightboxIdx(i)}
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx(i); }}
                   aria-label={`View screenshot ${i + 1}`}
                 >
                   <img src={url} alt={`Thumbnail ${i + 1}`} loading="lazy" />

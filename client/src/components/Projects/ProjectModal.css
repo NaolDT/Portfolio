@@ -16,8 +16,8 @@
   border: 0.5px solid rgba(0,212,255,0.2);
   border-radius: 16px;
   padding: 2.5rem;
-  width: 100%; max-width: 700px;
-  max-height: 88vh;
+  width: 100%; max-width: 900px;
+  max-height: 90vh;
   overflow-y: auto;
   animation: slide-up 0.25s cubic-bezier(0.4,0,0.2,1);
 }
@@ -64,7 +64,7 @@
 .modal-gallery-main {
   position: relative;
   width: 100%;
-  height: 240px;
+  height: clamp(220px, 45vh, 520px);
   background: #0A0E1A;
   cursor: pointer;
   overflow: hidden;
@@ -278,7 +278,7 @@
 @media (max-width: 480px) {
   .modal-overlay { padding: 0.5rem; align-items: flex-end; }
   .modal-box { padding: 1.5rem 1.25rem 2rem; border-radius: 16px 16px 12px 12px; max-height: 92vh; }
-  .modal-gallery-main { height: 180px; }
+.modal-gallery-main { height: clamp(160px, 35vw, 220px); }
   .modal-gallery-thumb { width: 48px; height: 34px; }
   .modal-actions { flex-direction: column; }
   .modal-actions a { width: 100%; justify-content: center; }
