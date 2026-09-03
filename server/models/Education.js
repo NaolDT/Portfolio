@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 
 const certificationSchema = new mongoose.Schema({
-  name:   { type: String, required: true },
-  org:    { type: String, required: true },
-  year:   { type: String, default: '' },
-  note:   { type: String, default: '' },
-  status: { type: String, default: 'Earned' },
+  name:      { type: String, required: true },
+  org:       { type: String, required: true },
+  year:      { type: String, default: '' },
+  note:      { type: String, default: '' },
+  status:    { type: String, default: 'Earned' },
+  fileUrl:   { type: String, default: '' },  
+  fileType:  { type: String, default: '' },  
 }, { _id: false });
 
 const educationSchema = new mongoose.Schema({
