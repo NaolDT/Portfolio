@@ -66,22 +66,14 @@ function CertCard({ cert }) {
   const isPdf    = cert.fileType === 'pdf';
   const isImage  = cert.fileType === 'image';
 
-  const handleView = () => {
+  const handleView = (e) => {
   if (isPdf) {
-    let viewUrl = cert.fileUrl;
-    if (viewUrl.includes('cloudinary.com') && viewUrl.includes('/raw/upload/')) {
-      viewUrl = viewUrl.replace('/raw/upload/', '/raw/upload/fl_attachment:false/');
-    }
-
-    window.open(viewUrl, '_blank', 'noreferrer');
-        const googleViewer = `https://docs.google.com/viewer?url=${encodeURIComponent(cert.fileUrl)}&embedded=false`;
-    window.open(googleViewer, '_blank', 'noreferrer');
-
+    e.preventDefault();
+    window.open(cert.fileUrl, '_blank');
   } else if (isImage) {
     setLightboxOpen(true);
   }
 };
-
   return (
     <>
       <div className={`cert-card ${hasFile ? 'cert-card-clickable' : ''}`}>
@@ -103,15 +95,27 @@ function CertCard({ cert }) {
 
         <div className="cert-card-right">
           <span className="cert-badge">{cert.status || 'Earned'}</span>
-          {hasFile && (
-            <button
-              className="cert-view-btn"
-              onClick={handleView}
-              aria-label={isPdf ? `Open ${cert.name} PDF` : `View ${cert.name} certificate`}
-            >
-              {isPdf   ? 'View PDF ↗' : 'View ↗'}
-            </button>
-          )}
+         {hasFile && (
+  isPdf ? (
+    <a
+      href={cert.fileUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="cert-view-btn"
+      aria-label={`Open ${cert.name} PDF`}
+    > 
+      View PDF ↗
+    </a>
+  ) : (
+    <button
+      className="cert-view-btn"
+      onClick={handleView}
+      aria-label={`View ${cert.name} certificate`}
+    >
+      View ↗
+    </button>
+  )
+)}
         </div>
       </div>
 

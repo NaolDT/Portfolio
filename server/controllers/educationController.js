@@ -1,5 +1,6 @@
 const Education  = require('../models/Education');
 const cloudinary = require('../utils/cloudinary');
+const path       = require('path');
 
 const getEducation = async (req, res) => {
   try {
@@ -36,12 +37,10 @@ const updateEducation = async (req, res) => {
         if (!file || !parsedCerts[idx]) continue;
 
         const isPdf = file.mimetype === 'application/pdf';
+        const { url, fileType } = await uploadToCloudinary(file, isPdf);
 
-        const result = await uploadToCloudinary(file, isPdf);
-
-        parsedCerts[idx].fileUrl  = result.url;
-        parsedCerts[idx].fileType = isPdf ? 'pdf' : 'image';
-        parsedCerts[idx].fileName = file.originalname;
+        parsedCerts[idx].fileUrl  = url;
+        parsedCerts[idx].fileType = fileType;
       }
     }
 
@@ -49,9 +48,9 @@ const updateEducation = async (req, res) => {
     if (!doc) {
       doc = await Education.create({
         degree, university, faculty, period,
-        courses: parsedCourses,
+        courses:        parsedCourses,
         certifications: parsedCerts,
-        certNote: certNote || '',
+        certNote:       certNote || '',
       });
     } else {
       doc.degree         = degree         || doc.degree;
@@ -60,7 +59,7 @@ const updateEducation = async (req, res) => {
       doc.period         = period         || doc.period;
       doc.courses        = parsedCourses;
       doc.certifications = parsedCerts;
-      doc.certNote       = certNote       || '';
+      doc.certNote       = certNote || '';
       await doc.save();
     }
 
@@ -73,45 +72,45 @@ const updateEducation = async (req, res) => {
 
 async function uploadToCloudinary(file, isPdf) {
   return new Promise((resolve, reject) => {
-    const options = isPdf
-      ? {
+    if (isPdf) {
+      const timestamp  = Date.now();
+      const public_id  = `portfolio/certificates/pdf/cert_${timestamp}`;
+
+      cloudinary.uploader.upload_stream(
+        {
           resource_type: 'raw',
-          folder:        'portfolio/certificates',
-          use_filename:  true,
-          unique_filename: true,
-          format:        'pdf',
+          public_id,
+          format:        'pdf',    
+          timeout:       60000,
+        },
+        (error, result) => {
+          if (error) return reject(new Error(`Cloudinary PDF upload failed: ${error.message}`));
+          if (!result?.secure_url) return reject(new Error('No URL returned'));
+
+          let url = result.secure_url;
+          if (!url.endsWith('.pdf')) url = url + '.pdf';
+
+          resolve({ url, fileType: 'pdf' });
         }
-      : {
+      ).end(file.buffer);
+
+    } else {
+      const timestamp = Date.now();
+      const public_id = `portfolio/certificates/images/cert_${timestamp}`;
+
+      cloudinary.uploader.upload_stream(
+        {
           resource_type: 'image',
-          folder:        'portfolio/certificates',
-          use_filename:  true,
-          unique_filename: true,
-        };
-
-    const stream = cloudinary.uploader.upload_stream(
-      options,
-      (error, result) => {
-        if (error) {
-          console.log('Cloudinary cert upload error:', error.message);
-          return reject(new Error(`Upload failed: ${error.message}`));
+          public_id,
+          timeout:       60000,
+        },
+        (error, result) => {
+          if (error) return reject(new Error(`Cloudinary image upload failed: ${error.message}`));
+          if (!result?.secure_url) return reject(new Error('No URL returned'));
+          resolve({ url: result.secure_url, fileType: 'image' });
         }
-        if (!result?.secure_url) {
-          return reject(new Error('No URL returned from Cloudinary'));
-        }
-
-        let url = result.secure_url;
-
-        if (isPdf && !url.endsWith('.pdf')) {
-          url = url + '.pdf';
-        }
-
-        console.log(`Cert uploaded (${isPdf ? 'PDF' : 'image'}):`, url);
-        resolve({ url, publicId: result.public_id });
-      }
-    );
-
-    stream.on('error', (err) => reject(new Error(`Stream error: ${err.message}`)));
-    stream.end(file.buffer);
+      ).end(file.buffer);
+    }
   });
 }
 
