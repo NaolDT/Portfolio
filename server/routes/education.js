@@ -2,10 +2,10 @@ const express  = require('express');
 const router   = express.Router();
 const protect  = require('../middleware/auth');
 const { certUpload } = require('../middleware/upload');
-const { getEducation, updateEducation } = require('../controllers/educationController');
+const { getEducation, updateEducation, getSignedUrl } = require('../controllers/educationController');
 
-// certUpload.fields allows named file fields per certification
-router.get('/',  getEducation);
+router.get('/',           getEducation);
+router.get('/signed-url', getSignedUrl);
 router.put('/',  protect, certUpload.fields([
   { name: 'certFile_0', maxCount: 1 },
   { name: 'certFile_1', maxCount: 1 },

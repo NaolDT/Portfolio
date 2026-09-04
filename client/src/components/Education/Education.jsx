@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './Education.css';
 import useApi from '../../hooks/useApi';
+import api from '../../api/axiosInstance';
 
 const FALLBACK = {
   degree:         'BSc Software Engineering',
@@ -21,17 +22,8 @@ function CertLightbox({ cert, onClose }) {
       aria-modal="true"
       aria-label={`Certificate: ${cert.name}`}
     >
-      <button
-        className="cert-lightbox-close"
-        onClick={onClose}
-        aria-label="Close"
-      >
-        ✕
-      </button>
-      <div
-        className="cert-lightbox-content"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <button className="cert-lightbox-close" onClick={onClose} aria-label="Close">✕</button>
+      <div className="cert-lightbox-content" onClick={(e) => e.stopPropagation()}>
         <div className="cert-lightbox-header">
           <div>
             <div className="cert-lightbox-title">{cert.name}</div>
@@ -61,22 +53,39 @@ function CertLightbox({ cert, onClose }) {
 
 function CertCard({ cert }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [pdfLoading, setPdfLoading]     = useState(false);
+  const [pdfError, setPdfError]         = useState('');
 
-  const hasFile  = !!cert.fileUrl;
-  const isPdf    = cert.fileType === 'pdf';
-  const isImage  = cert.fileType === 'image';
+  const hasFile = !!cert.fileUrl;
+  const isPdf   = cert.fileType === 'pdf';
+  const isImage = cert.fileType === 'image';
 
-  const handleView = (e) => {
-  if (isPdf) {
-    e.preventDefault();
-    window.open(cert.fileUrl, '_blank');
-  } else if (isImage) {
-    setLightboxOpen(true);
-  }
-};
+  const handleViewPdf = async () => {
+    setPdfLoading(true);
+    setPdfError('');
+    try {
+      if (cert.publicId) {
+        const res = await api.get('/api/education/signed-url', {
+          params: {
+            public_id:     cert.publicId,
+            resource_type: 'raw',
+          },
+        });
+        window.open(res.data.url, '_blank');
+      } else {
+        window.open(cert.fileUrl, '_blank');
+      }
+    } catch (err) {
+      setPdfError('Could not open PDF. Try again.');
+      setTimeout(() => setPdfError(''), 3000);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <>
-      <div className={`cert-card ${hasFile ? 'cert-card-clickable' : ''}`}>
+      <div className="cert-card">
         <div className="cert-card-left">
           <div className="cert-icon-wrap">
             {isPdf   && <span className="cert-file-icon cert-pdf-icon">PDF</span>}
@@ -91,31 +100,30 @@ function CertCard({ cert }) {
             {cert.org}{cert.year ? ` — ${cert.year}` : ''}
           </div>
           {cert.note && <div className="cert-card-note">{cert.note}</div>}
+          {pdfError  && <div className="cert-error">{pdfError}</div>}
         </div>
 
         <div className="cert-card-right">
           <span className="cert-badge">{cert.status || 'Earned'}</span>
-         {hasFile && (
-  isPdf ? (
-    <a
-      href={cert.fileUrl}
-      target="_blank"
-      rel="noreferrer"
-      className="cert-view-btn"
-      aria-label={`Open ${cert.name} PDF`}
-    > 
-      View PDF ↗
-    </a>
-  ) : (
-    <button
-      className="cert-view-btn"
-      onClick={handleView}
-      aria-label={`View ${cert.name} certificate`}
-    >
-      View ↗
-    </button>
-  )
-)}
+          {hasFile && isPdf && (
+            <button
+              className="cert-view-btn"
+              onClick={handleViewPdf}
+              disabled={pdfLoading}
+              aria-label={`Open ${cert.name} PDF`}
+            >
+              {pdfLoading ? 'Opening...' : 'View PDF ↗'}
+            </button>
+          )}
+          {hasFile && isImage && (
+            <button
+              className="cert-view-btn"
+              onClick={() => setLightboxOpen(true)}
+              aria-label={`View ${cert.name} certificate`}
+            >
+              View ↗
+            </button>
+          )}
         </div>
       </div>
 
@@ -142,7 +150,6 @@ function Education() {
           <div className="edu-org">{d.university}</div>
           <div className="edu-faculty">{d.faculty}</div>
           <div className="edu-period">{d.period}</div>
-
           {d.courses?.length > 0 && (
             <>
               <div className="edu-courses-label">Key coursework</div>

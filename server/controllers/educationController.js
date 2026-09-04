@@ -1,11 +1,33 @@
 const Education  = require('../models/Education');
 const cloudinary = require('../utils/cloudinary');
+const crypto     = require('crypto');
 
 const getEducation = async (req, res) => {
   try {
     let doc = await Education.findOne();
     if (!doc) doc = await Education.create({});
     res.json(doc);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const getSignedUrl = (req, res) => {
+  try {
+    const { public_id, resource_type = 'raw' } = req.query;
+    if (!public_id) return res.status(400).json({ message: 'public_id required' });
+
+    const timestamp  = Math.round(Date.now() / 1000);
+    const apiSecret  = process.env.CLOUDINARY_API_SECRET;
+    const apiKey     = process.env.CLOUDINARY_API_KEY;
+    const cloudName  = process.env.CLOUDINARY_CLOUD_NAME;
+
+    const toSign     = `public_id=${public_id}&timestamp=${timestamp}${apiSecret}`;
+    const signature  = crypto.createHash('sha1').update(toSign).digest('hex');
+
+    const url = `https://res.cloudinary.com/${cloudName}/${resource_type}/upload/v1/${public_id}?timestamp=${timestamp}&signature=${signature}&api_key=${apiKey}`;
+
+    res.json({ url });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -36,10 +58,11 @@ const updateEducation = async (req, res) => {
         if (!file || !parsedCerts[idx]) continue;
 
         const isPdf = file.mimetype === 'application/pdf';
-        const { url, fileType } = await uploadToCloudinary(file, isPdf);
+        const result = await uploadToCloudinary(file, isPdf);
 
-        parsedCerts[idx].fileUrl  = url;
-        parsedCerts[idx].fileType = fileType;
+        parsedCerts[idx].fileUrl   = result.url;
+        parsedCerts[idx].publicId  = result.publicId;
+        parsedCerts[idx].fileType  = result.fileType;
       }
     }
 
@@ -47,9 +70,9 @@ const updateEducation = async (req, res) => {
     if (!doc) {
       doc = await Education.create({
         degree, university, faculty, period,
-        courses:        parsedCourses,
+        courses: parsedCourses,
         certifications: parsedCerts,
-        certNote:       certNote || '',
+        certNote: certNote || '',
       });
     } else {
       doc.degree         = degree         || doc.degree;
@@ -72,49 +95,36 @@ const updateEducation = async (req, res) => {
 async function uploadToCloudinary(file, isPdf) {
   return new Promise((resolve, reject) => {
     const timestamp = Date.now();
+    const folder    = 'portfolio/certificates';
+    const publicId  = `${folder}/cert_${timestamp}`;
 
-    if (isPdf) {
-      cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'image',
-          folder:        'portfolio/certificates',
-          public_id:     `cert_${timestamp}`,
-          format:        'pdf',
-          type:          'upload',
-          access_mode:   'public',
-          timeout:       60000,
-        },
-        (error, result) => {
-          if (error) {
-            console.log('Cloudinary PDF error:', error.message);
-            return reject(new Error(`PDF upload failed: ${error.message}`));
-          }
-          if (!result?.secure_url) return reject(new Error('No URL returned'));
-
-          const url = result.secure_url;
-          console.log('PDF uploaded:', url);
-          resolve({ url, fileType: 'pdf' });
+    cloudinary.uploader.upload_stream(
+      {
+        resource_type: isPdf ? 'raw' : 'image',
+        public_id:     publicId,
+        type:          'upload',
+        access_mode:   'public',
+        timeout:       60000,
+      },
+      (error, result) => {
+        if (error) {
+          console.log('Cloudinary upload error:', error.message);
+          return reject(new Error(`Upload failed: ${error.message}`));
         }
-      ).end(file.buffer);
+        if (!result?.secure_url) return reject(new Error('No URL returned'));
 
-    } else {
-      cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'image',
-          folder:        'portfolio/certificates',
-          public_id:     `cert_${timestamp}`,
-          type:          'upload',
-          access_mode:   'public',
-          timeout:       60000,
-        },
-        (error, result) => {
-          if (error) return reject(new Error(`Image upload failed: ${error.message}`));
-          if (!result?.secure_url) return reject(new Error('No URL returned'));
-          resolve({ url: result.secure_url, fileType: 'image' });
-        }
-      ).end(file.buffer);
-    }
+        console.log('Uploaded:', result.secure_url);
+        console.log('Public ID:', result.public_id);
+        console.log('Resource type:', result.resource_type);
+
+        resolve({
+          url:      result.secure_url,
+          publicId: result.public_id,
+          fileType: isPdf ? 'pdf' : 'image',
+        });
+      }
+    ).end(file.buffer);
   });
 }
 
-module.exports = { getEducation, updateEducation };
+module.exports = { getEducation, updateEducation, getSignedUrl };
